@@ -488,20 +488,16 @@ function get_sources_huayra_apt-get() {
 
 function get_sources_huayra_apt() {
 	SOURCES_CONTENTS=( \
-		"deb http://http.debian.net/debian/ jessie main contrib non-free
-deb-src http://http.debian.net/debian/ jessie main contrib non-free
+		"## Repositorio oficial de Debian GNU/Linux
+deb http://ftp.debian.org/debian/ jessie main contrib non-free
+#deb http://ftp.debian.org/debian/ jessie main contrib non-free
 deb http://security.debian.org/ jessie/updates main contrib non-free
 deb-src http://security.debian.org/ jessie/updates main contrib non-free
-deb http://http.debian.net/debian/ jessie-updates main contrib non-free
-deb-src http://http.debian.net/debian/ jessie-updates main contrib non-free
 " \
-		"# Repositorio de Huayra GNU/Linux
-deb http://repo.huayra.conectarigualdad.gob.ar/huayra sud main contrib non-free
-deb-src http://repo.huayra.conectarigualdad.gob.ar/huayra sud main contrib non-free
-
-# Repositorio de Huayra GNU/Linux (actualizaciones)
-deb http://repo.huayra.conectarigualdad.gob.ar/huayra sud-updates main contrib non-free
-deb-src http://repo.huayra.conectarigualdad.gob.ar/huayra sud-updates main contrib non-free
+		"## Repositorio de Huayra GNU/Linux
+deb http://repo.huayra.conectarigualdad.gob.ar/huayra/ sud main contrib non-free
+## Repositorio de Huayra GNU/Linux (actualizaciones)
+deb http://repo.huayra.conectarigualdad.gob.ar/huayra/ sud-updates main contrib non-free
 " \
 	)
 }
