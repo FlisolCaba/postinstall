@@ -489,8 +489,8 @@ function get_sources_huayra_apt-get() {
 function get_sources_huayra_apt() {
 	SOURCES_CONTENTS=( \
 		"## Repositorio oficial de Debian GNU/Linux
-deb http://ftp.debian.org/debian/ jessie main contrib non-free
-#deb http://ftp.debian.org/debian/ jessie main contrib non-free
+deb http://mirrors.dcarsat.com.ar/debian/ jessie main contrib non-free
+#deb-src http://mirrors.dcarsat.com.ar/debian/ jessie main contrib non-free
 deb http://security.debian.org/ jessie/updates main contrib non-free
 deb-src http://security.debian.org/ jessie/updates main contrib non-free
 " \
@@ -508,20 +508,14 @@ function get_sources_debian_apt-get() {
 
 function get_sources_debian_apt() {
 	SOURCES_CONTENTS=( \
-	"deb http://ftp.ccc.uba.ar/pub/linux/debian/debian stable main contrib non-free
-#deb-src http://ftp.ccc.uba.ar/pub/linux/debian/debian stable main contrib non-free
+	"deb http://mirrors.dcarsat.com.ar/debian/ stable main contrib non-free
+deb-src http://mirrors.dcarsat.com.ar/debian/ stable main contrib non-free
 
 deb http://mirrors.dcarsat.com.ar/debian/ stable-updates main contrib non-free
-#deb-src http://mirrors.dcarsat.com.ar/debian/ stable-updates main contrib non-free
+deb-src http://mirrors.dcarsat.com.ar/debian/ stable-updates main contrib non-free
 
-deb http://mirrors.dcarsat.com.ar/debian/ stable main contrib non-free
-#deb-src http://mirrors.dcarsat.com.ar/debian/ stable main contrib non-free
-
-deb http://mirrors.dcarsat.com.ar/debian/ stable-updates main contrib non-free
-#deb-src http://mirrors.dcarsat.com.ar/debian/ stable-updates main contrib non-free
-
-deb http://security.debian.org/ jessie/updates main contrib non-free
-#deb-src http://security.debian.org/ jessie/updates main contrib non-free
+deb http://security.debian.org/ stable/updates main contrib non-free
+deb-src http://security.debian.org/ stable/updates main contrib non-free
 " \
 	)
 }
@@ -644,7 +638,7 @@ Coordinador de Instaladores"
 			_e_notice "Su lista actual de paquetes en ${sources_filepath}:"
 			cat "${sources_filepath}"
 			_e_newline
-			_e_msg "Se propone reemplazar el contenido del mismo por:"
+			_e_notice "Se propone reemplazar el contenido del mismo por:"
 			_e "${sources_cont}\n"
 
 			read -r -n 1 -p "Esta de acuerdo? [s/N]: " answer
