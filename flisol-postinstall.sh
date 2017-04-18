@@ -35,7 +35,7 @@
 declare -r FLISOL_EVENT='CABA'
 declare -r FLISOL_YEAR="$(date +'%Y')"
 declare -r FLISOL_EDITION="$(( $(date +'%y') - 4 ))"
-declare -r FLISOL_ORGANIZER_URL="https://cafelug.org.ar"
+declare -r FLISOL_ORGANIZER_URL="http://cafelug.org.ar"
 
 declare -r EVENTOL_URL_BASE='https://eventol.flisol.org.ar'
 declare -r EVENTOL_URL_EVENT='caba'
@@ -517,6 +517,24 @@ deb http://ar.archive.ubuntu.com/ubuntu/ yakkety-updates main restricted univers
 	)
 }
 
+function get_sources_mint_apt-get() {
+	get_sources_ubuntu_apt
+}
+
+function get_sources_mint_apt() {
+	SOURCES_CONTENTS=( \
+"deb http://mintpackages.xfree.com.ar serena main upstream import backport 
+
+deb http://ubnt-archive.xfree.com.ar/ubuntu xenial main restricted universe multiverse
+deb http://ubnt-archive.xfree.com.ar/ubuntu xenial-updates main restricted universe multiverse
+deb http://ubnt-archive.xfree.com.ar/ubuntu xenial-backports main restricted universe multiverse
+
+deb http://security.ubuntu.com/ubuntu/ xenial-security main restricted universe multiverse
+deb http://archive.canonical.com/ubuntu/ xenial partner
+" \
+	)
+}
+
 # To specify a source file for a package manager, create a function named like
 # get_sources_filepath_PACKAGEMAN
 # Populating it with the array SOURCES_FILEPATHS=( "/full/path/to/source" )
@@ -540,6 +558,10 @@ function get_sources_filepath_apt-get_huayra() {
 function get_sources_filepath_apt_huayra() {
 	SOURCES_FILEPATHS=( ${SOURCES_FILEPATHS[*]} \
 											"/etc/apt/sources.list.d/huayra.list" )
+}
+
+function get_sources_filepath_apt_mint() {
+	SOURCES_FILEPATHS=( "/etc/apt/sources.list.d/official-package-repositories.list" )
 }
 
 # Replace the sources file for the given distro
