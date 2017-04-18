@@ -545,13 +545,13 @@ function get_sources_mint_apt-get() {
 
 function get_sources_mint_apt() {
 	SOURCES_CONTENTS=( \
-"deb http://mintpackages.xfree.com.ar serena main upstream import backport 
+"deb http://packages.linuxmint.com serena main upstream import backport 
 
-deb http://ubnt-archive.xfree.com.ar/ubuntu xenial main restricted universe multiverse
-deb http://ubnt-archive.xfree.com.ar/ubuntu xenial-updates main restricted universe multiverse
-deb http://ubnt-archive.xfree.com.ar/ubuntu xenial-backports main restricted universe multiverse
+deb http://ar.archive.ubuntu.com/ubuntu xenial main restricted universe multiverse
+deb http://ar.archive.ubuntu.com/ubuntu xenial-updates main restricted universe multiverse
+deb http://ar.archive.ubuntu.com/ubuntu xenial-backports main restricted universe multiverse
 
-deb http://security.ubuntu.com/ubuntu/ xenial-security main restricted universe multiverse
+deb http://ar.archive.ubuntu.com/ubuntu/ xenial-security main restricted universe multiverse
 deb http://archive.canonical.com/ubuntu/ xenial partner
 " \
 	)
