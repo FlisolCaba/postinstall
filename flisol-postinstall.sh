@@ -35,21 +35,26 @@
 declare -r FLISOL_EVENT='CABA'
 declare -r FLISOL_YEAR="$(date +'%Y')"
 declare -r FLISOL_EDITION="$(( $(date +'%y') - 4 ))"
+declare -r FLISOL_ORGANIZER_URL="https://cafelug.org.ar"
 
 declare -r EVENTOL_URL_BASE='https://eventol.flisol.org.ar'
 declare -r EVENTOL_URL_EVENT='caba'
 
 declare -r VERSION_MAJOR='0'
 declare -r VERSION_MINOR='7'
-declare -r VERSION_REV='1-201704'
+declare -r VERSION_REV='3-201704'
 
-declare -r POSTINSTALL_URL="http://install.flisolcaba.net/postinstall"
-declare -r PREINSTALL_URL="http://install.flisolcaba.net/preinstall"
+declare -r INSTALL_URL="http://install.flisolcaba.net"
+
+declare -r DEBUG=false
 # <>
 
 # Config interna
 # NO MODIFICAR a menos que sepa lo que hace
 declare -r VERSION="${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_REV}"
+
+# Add contributors here
+declare -r AUTHORS="hackan@cafelug.org.ar"
 
 declare -r SCRIPT_SIGNATURE_FILE="${HOME}/.flisol${EVENTOL_URL_EVENT}${FLISOL_YEAR}"
 
@@ -76,65 +81,41 @@ TASKS=( \
 )
 # <>
 
-# include hc_echoing
-# https://git.linuxnoblog.net/hackan/funciones-bash/commit/756c4d34902bc2bcbc0c865548016e1c6f71bbe2
-function hc_e() {
-	if [ ! ${HC_ECHOING_QUIET} ]; then
-		echo -en "$@"
-	fi
+function _e() {
+	echo -en "$@"
 }
 
-function hc_e_msg() {
-	hc_e "*** $@\n"
+function _e_title() {
+	_e "*** $*\n"
 }
 
-function hc_e_err() {
-	hc_e "!!! "
-	case ${LANG} in
-		es*) hc_e "Error:";;
-
-		de*) hc_e "Fehler:";;
-
-		en* | c | C | *) hc_e "Error:";;
-	esac
-	hc_e " $@\n"
+function _e_msg() {
+	_e "$*\n"
 }
 
-function hc_e_warn() {
-	hc_e "**! "
-	case ${LANG} in
-		es*) hc_e "Advertencia:";;
-
-		de*) hc_e "Warnung:";;
-
-		en* | c | C | *) hc_e "Warning:";;
-	esac
-	hc_e " $@\n"
+function _e_err() {
+	_e "!!! Error: $*\n"
 }
 
-function hc_e_notice() {
-	hc_e "**? "
-	case ${LANG} in
-		es*) hc_e "Atencion:";;
-
-		de*) hc_e "Achtung:";;
-
-		en* | c | C | *) hc_e "Notice:";;
-	esac
-	hc_e " $@\n"
+function _e_warn() {
+	_e "**! Advertencia: $*\n"
 }
 
-function hc_e_special() {
-	hc_e "??? $@\n"
+function _e_notice() {
+	_e "**? Atencion: $*\n"
 }
 
-function hc_e_newline() {
-	hc_e "\n"
+function _e_special() {
+	_e "??? $*\n"
 }
 
-function hc_e_debug() {
-	if [ "${HC_ECHOING_DEBUG}" ]; then
-		echo "DEBUG### $@"
+function _e_newline() {
+	_e "\n"
+}
+
+function _e_debug() {
+	if $DEBUG; then
+		echo "DEBUG### $*"
 	fi
 }
 # <>
@@ -151,25 +132,25 @@ function elevate() {
 }
 
 function press_any_key() {
-	read -s -n 1 -p '**? Presione cualquier tecla para continuar...'
-	hc_e_newline
+	read -r -s -n 1 -p '**? Presione cualquier tecla para continuar...'
+	_e_newline
 }
 
 # Read a line from the user input
 function cin() {
 	local data=""
-	read -e -p "${1}" data
+	read -r -e -p "${1}" data
 	printf "%s" "${data}"
 }
 
 function print_line() {
-	hc_e_msg "------------------------------------------------------------- ***"
+	_e "-----------------------------------------------------------------------\n"
 }
 
 # CTRL+C trap
 function ctrl_c() {
-	hc_e_newline
-	hc_e_notice "Se ha presionado CTRL+C.  Saliendo forzadamente..."
+	_e_newline
+	_e_notice "Se ha presionado CTRL+C.  Saliendo forzadamente..."
 
 	# cleanup?
 
@@ -193,7 +174,7 @@ function system() {
 
 # Returns 0 if the given function exists, 1 otherwise
 function function_exists() {
-	if [[ "$(type -t ${1})" == "function" ]]; then
+	if [[ "$(type -t "${1}")" == "function" ]]; then
 		return 0
 	fi
 
@@ -339,7 +320,7 @@ function get_package_manager() {
 	local p=""
 
 	for p in ${pm[*]}; do
-		if [ -x "$(which ${p})" ]; then
+		if [ -x "$(which "${p}")" ]; then
 			printf "%s" "${p}"
 			return
 		fi
@@ -417,30 +398,30 @@ function packages_install() {
 	local packages=( $@ )
 
 	if [ -z "${PACKAGE_MANAGER_BIN}" ]; then
-		hc_e_msg "Instale los siguientes paquetes: ${packages[*]}"
+		_e_msg "Instale los siguientes paquetes: ${packages[*]}"
 		press_any_key
 	else
-		hc_e_msg "Instalando paquetes..."
-		hc_e_notice "${PACKAGE_MANAGER_BIN} ${PACKAGE_MANAGER_INSTALL_PARAMS} ${packages[*]}"
-		elevate $PACKAGE_MANAGER_BIN $PACKAGE_MANAGER_INSTALL_PARAMS ${packages[*]}
+		_e_msg "Instalando paquetes..."
+		_e_notice "${PACKAGE_MANAGER_BIN} ${PACKAGE_MANAGER_INSTALL_PARAMS} ${packages[*]}"
+		elevate "$PACKAGE_MANAGER_BIN" "$PACKAGE_MANAGER_INSTALL_PARAMS" "${packages[*]}"
 		if [ $? -ne 0 ]; then
-			hc_e_err "La instalacion no termino satisfactoriamente.\nRevise el registro de ejecucion y corrija los problemas"
-			hc_e_notice "Presione CTRL+C para salir"
+			_e_err "La instalacion no termino satisfactoriamente.\nRevise el registro de ejecucion y corrija los problemas"
+			_e_notice "Presione CTRL+C para salir"
 			press_any_key
 		fi
 	fi
-	hc_e_msg "Terminado."
+	_e_msg "Terminado."
 }
 
 # Updates packages list/db or tells the user to do it
 function packages_update() {
 	if [ -z "${PACKAGE_MANAGER_BIN}" ]; then
-		hc_e_msg "Actualice la lista de paquetes"
+		_e_msg "Actualice la lista de paquetes"
 		press_any_key
 	else
-		hc_e_msg "Actualizando lista de paquetes..."
-		hc_e_notice "${PACKAGE_MANAGER_BIN} ${PACKAGE_MANAGER_UPDATE_PARAMS}"
-		elevate ${PACKAGE_MANAGER_BIN} ${PACKAGE_MANAGER_UPDATE_PARAMS}
+		_e_msg "Actualizando lista de paquetes..."
+		_e_notice "${PACKAGE_MANAGER_BIN} ${PACKAGE_MANAGER_UPDATE_PARAMS}"
+		elevate "${PACKAGE_MANAGER_BIN}" "${PACKAGE_MANAGER_UPDATE_PARAMS}"
 		return $?
 	fi
 
@@ -450,12 +431,12 @@ function packages_update() {
 # Upgrades packages list/db or tells the user to do it
 function packages_upgrade() {
 	if [ -z "${PACKAGE_MANAGER_BIN}" ]; then
-		hc_e_msg "Actualice los paquetes del sistema"
+		_e_msg "Actualice los paquetes del sistema"
 		press_any_key
 	else
-		hc_e_msg "Actualizando paquetes del sistema..."
-		hc_e_notice "${PACKAGE_MANAGER_BIN} ${PACKAGE_MANAGER_UPGRADE_PARAMS}"
-		elevate ${PACKAGE_MANAGER_BIN} ${PACKAGE_MANAGER_UPGRADE_PARAMS}
+		_e_msg "Actualizando paquetes del sistema..."
+		_e_notice "${PACKAGE_MANAGER_BIN} ${PACKAGE_MANAGER_UPGRADE_PARAMS}"
+		elevate "${PACKAGE_MANAGER_BIN}" "${PACKAGE_MANAGER_UPGRADE_PARAMS}"
 		return $?
 	fi
 
@@ -585,7 +566,7 @@ function replace_sources() {
 	done
 
 	if [[ ${#SOURCES_FILEPATHS[*]} -eq 0 ]]; then
-		hc_e_err "No hay ruta a las fuentes definida para su manejador de paquetes"
+		_e_err "No hay ruta a las fuentes definida para su manejador de paquetes"
 		return 1
 	fi
 
@@ -594,12 +575,12 @@ function replace_sources() {
 		get_sources_${distro}_${pm}
 
 		if [[ ${#SOURCES_CONTENTS[*]} -eq 0 ]]; then
-			hc_e_err "No hay fuentes definidas para su distro y manejador de paquetes"
+			_e_err "No hay fuentes definidas para su distro y manejador de paquetes"
 			return 1
 		fi
 
 		if [[ ${#SOURCES_CONTENTS[*]} -ne ${#SOURCES_FILEPATHS[*]} ]]; then
-			hc_e_err "Hay un error en este script: se ha definido erroneamente las \
+			_e_err "Hay un error en este script: se ha definido erroneamente las \
 rutas a fuentes y los contenidos de las mismas. Por favor, reportelo al \
 Coordinador de Instaladores"
 			return 1
@@ -609,15 +590,15 @@ Coordinador de Instaladores"
 			sources_filepath="${SOURCES_FILEPATHS[$i]}"
 			sources_cont="${SOURCES_CONTENTS[$i]}"
 
-			hc_e_newline
-			hc_e_notice "Su lista actual de paquetes en ${sources_filepath}:"
-			cat ${sources_filepath}
-			hc_e_newline
-			hc_e_msg "Se propone reemplazar el contenido del mismo por:"
-			hc_e "${sources_cont}\n"
+			_e_newline
+			_e_notice "Su lista actual de paquetes en ${sources_filepath}:"
+			cat "${sources_filepath}"
+			_e_newline
+			_e_msg "Se propone reemplazar el contenido del mismo por:"
+			_e "${sources_cont}\n"
 
-			read -n 1 -p "Esta de acuerdo? [s/N]: " answer
-			hc_e_newline
+			read -r -n 1 -p "Esta de acuerdo? [s/N]: " answer
+			_e_newline
 
 			if [ "x${answer,,}" == "xs" ]; then
 				elevate mv "${sources_filepath}" "${sources_filepath}.bak"
@@ -627,9 +608,9 @@ Coordinador de Instaladores"
 ${sources_cont}
 EOF" 1
 				if [ $? -eq 0 ]; then
-					hc_e_msg "Lista reemplazada"
+					_e_msg "Lista reemplazada"
 				else
-					hc_e_err "Ocurrio un error al tratar de reemplazar la lista"
+					_e_err "Ocurrio un error al tratar de reemplazar la lista"
 					return 1
 				fi
 			fi
@@ -669,9 +650,9 @@ function prereq() {
 Instale 'sudo' o ejecute este script como root"
 
 	if [ -f "${SCRIPT_SIGNATURE_FILE}" ]; then
-		hc_e_notice "Este script ya fue ejecutado y finalizo exitosamente"
-		read -n 1 -p 'Esta seguro que desea ejecutarlo nuevamente? [s/N]' answer
-		hc_e_newline
+		_e_notice "Este script ya fue ejecutado y finalizo exitosamente"
+		read -r -n 1 -p 'Esta seguro que desea ejecutarlo nuevamente? [s/N]' answer
+		_e_newline
 
 		[ "${answer,,}" != "s" ] && exit 0
 
@@ -681,7 +662,7 @@ Instale 'sudo' o ejecute este script como root"
 
 # Exits with error, showing a message
 function bail_out() {
-	hc_e_notice "$@"
+	_e_notice "$@"
 	exit 1
 }
 
@@ -693,11 +674,14 @@ Que disfrutes!
 
 Un abrazo grande,
 - El equipo de FLISoL ${FLISOL_EVENT}
+${FLISOL_ORGANIZER_URL}
 EOF
 }
 
 function welcome() {
 	cat <<EOF
+FLISoL Postinstall Script v${VERSION} by ${AUTHORS}
+
 Hola! Bienvenido al FLISoL ${FLISOL_EVENT} ${FLISOL_YEAR} #${FLISOL_EDITION}!
 Esperamos que este disfrutando este dia, y que haya aprendido mucho con esta instalacion y las charlas.
 
@@ -712,7 +696,7 @@ function goodbye() {
 Hemos terminado :)
 No fue tan dificil, no?
 
-Ahora si, lo dejamos con su sistema para que lo disfrute, cualquier duda que tenga acerquese a uno de los instaladores o revise las opciones de contacto en nuestra web: ${EVENTOL_URL_BASE}/event/${EVENTOL_URL_EVENT}
+Ahora si, lo dejamos con su sistema para que lo disfrute, cualquier duda que tenga acerquese a uno de los instaladores o revise las opciones de contacto en nuestra web: ${FLISOL_ORGANIZER_URL}
 
 Un abrazo grande,
 - El equipo de FLISoL ${FLISOL_EVENT}
@@ -763,32 +747,32 @@ function task_verify_os() {
 	local os=""
 	local answer=""
 
-	hc_e_msg "Verificando sistema operativo..."
+	_e_title "Verificando sistema operativo..."
 
 	os="$(get_os_type)"
-	hc_e_msg "Se detecto que su sistema operativo es ${os}"
+	_e_msg "Se detecto que su sistema operativo es ${os}"
 
 	if [ -z "${os}" ]; then
-		hc_e_warn "Debe especificar su sistema operativo manualmente para \
+		_e_warn "Debe especificar su sistema operativo manualmente para \
 continuar con esta tarea"
 		answer="s"
 	else
-		read -n 1 -p "Desea especificar manualmente su sistema operativo? [s/N]: " answer
-		hc_e_newline
+		read -r -n 1 -p "Desea especificar manualmente su sistema operativo? [s/N]: " answer
+		_e_newline
 	fi
 
 	if [ "x${answer,,}" == "xs" ]; then
-		hc_e_msg "Especifique el sistema operativo. Puede ayudarse eligiendo de \
+		_e_msg "Especifique el sistema operativo. Puede ayudarse eligiendo de \
 las siguientes: ${SUPPORTED_OS[*]}"
 		os="$(cin 'OS: ')"
 	fi
 
 	if is_os_supported "$os"; then
-		hc_e_msg "Este script es compatible con su sistema ${os}"
+		_e_msg "Este script es compatible con su sistema ${os}"
 		return 0
 	else
-		hc_e_err "Este script no es compatible con su sistema ${os}"
-		hc_e_msg "Sistemas compatibles: ${SUPPORTED_OS[*]}"
+		_e_err "Este script no es compatible con su sistema ${os}"
+		_e_msg "Sistemas compatibles: ${SUPPORTED_OS[*]}"
 	fi
 
 	return 1
@@ -799,33 +783,33 @@ function task_verify_distro() {
 	local distro=""
 	local answer=""
 
-	hc_e_msg "Verificando distro..."
+	_e_title "Verificando distro..."
 
 	distro="$(get_distro)"
-	hc_e_msg "Se detecto que su distro es ${distro}"
+	_e_msg "Se detecto que su distro es ${distro}"
 
 	if [ -z "${distro}" ]; then
-		hc_e_warn "Debe especificar la distro manualmente para continuar con \
+		_e_warn "Debe especificar la distro manualmente para continuar con \
 esta tarea"
 		answer="s"
 	else
-		read -n 1 -p "Desea especificar manualmente su distro? [s/N]: " answer
-		hc_e_newline
+		read -r -n 1 -p "Desea especificar manualmente su distro? [s/N]: " answer
+		_e_newline
 	fi
 
 	if [ "x${answer,,}" == "xs" ]; then
-		hc_e_msg "Especifique el nombre de su distro. Puede ayudarse eligiendo de \
+		_e_msg "Especifique el nombre de su distro. Puede ayudarse eligiendo de \
 las siguientes: ${SUPPORTED_DIST[*]}"
 		distro="$(cin 'Distro: ')"
 	fi
 
 	if is_distro_supported "$distro"; then
-		hc_e_msg "Este script es compatible con su distro ${distro}"
+		_e_msg "Este script es compatible con su distro ${distro}"
 		DISTRO="${distro}"
 		return 0
 	else
-		hc_e_err "Este script no es compatible con su distro ${distro}"
-		hc_e_msg "Distros compatibles: ${SUPPORTED_DIST[*]}"
+		_e_err "Este script no es compatible con su distro ${distro}"
+		_e_msg "Distros compatibles: ${SUPPORTED_DIST[*]}"
 	fi
 
 	return 1
@@ -836,12 +820,13 @@ las siguientes: ${SUPPORTED_DIST[*]}"
 # http://unix.stackexchange.com/questions/116539/how-to-detect-the-desktop-environment-in-a-bash-script
 # http://askubuntu.com/questions/72549/how-to-determine-which-window-manager-is-running
 function task_change_wallpaper() {
-	hc_e_msg "Le ofrecemos fondos de pantalla para su sistema.\n\
+	_e_title "Cambiando fondo de pantalla..."
+	_e_msg "Le ofrecemos fondos de pantalla para su sistema.\n\
 Si desea descargarlos y/o ver los disponibles, dirijase a\n\
-${POSTINSTALL_URL}/wallpaper"
-	open_webbrowser "${POSTINSTALL_URL}/wallpapers.html"
+${INSTALL_URL}/postinstall/wallpaper"
+	open_webbrowser "${INSTALL_URL}/postinstall/wallpapers.html"
 	if [ $? -ne 0 ]; then
-		hc_e_err "No se ha podido abrir un navegador, por favor dirijase a la \
+		_e_err "No se ha podido abrir un navegador, por favor dirijase a la \
 URL indicada"
 	fi
 	press_any_key
@@ -851,13 +836,14 @@ URL indicada"
 # Attempts to fix /etc/network/interfaces: after booting with PXE, a static
 # IP is probably configured, which might cause issues with Network-Manager
 function task_fix_interfaces() {
-	hc_e_msg "Corrijamos la configuracion de red"
+	_e_title "Corrigiendo la configuracion de red..."
 
-	hc_e_msg "La configuracion actual es: cat /etc/network/interfaces"
+	_e_msg "La configuracion actual es:"
+	_e_notice "cat /etc/network/interfaces"
 	cat /etc/network/interfaces
 
-	read -n 1 -p "Desea corregir automaticamente el archivo? [S/n]: " answer
-	hc_e_newline
+	read -r -n 1 -p "Desea corregir automaticamente el archivo? [S/n]: " answer
+	_e_newline
 
 	[ "x${answer,,}" == "xn" ] && return 0
 
@@ -868,9 +854,9 @@ function task_fix_interfaces() {
 	system 'echo -e "source /etc/network/interfaces.d/*\n\nauto lo\niface lo inet loopback" > /etc/network/interfaces' 1
 
 	if [ $? -eq 0 ]; then
-		hc_e_msg "Listo"
+		_e_msg "Listo"
 	else
-		hc_e_err "Ocurrio un error al tratar de escribir el archivo"
+		_e_err "Ocurrio un error al tratar de escribir el archivo"
 		return 1
 	fi
 
@@ -887,17 +873,18 @@ function task_fix_interfaces() {
 	#     done
 	# fi
 
-	hc_e_msg "Ha quedado asi: cat /etc/network/interfaces"
+	_e_msg "Ha quedado asi:"
 	cat /etc/network/interfaces
 
 	return 0
 }
 
 function task_fix_sources() {
-	hc_e_msg "Se corregiran las listas de fuentes de paquetes de su distro"
+	_e_title "Corrigiendo listas de fuentes de paquetes..."
+	_e_msg "Se corregiran las listas de fuentes de paquetes de su distro"
 
-	if [ -z "${PACKAGE_MANAGER_BIN}" ] || [ -z "${DISTRO}" ]; then
-		hc_e_msg "No se ha especificado gestor de paquetes y/o distro, por lo \
+	if [[ -z "${PACKAGE_MANAGER_BIN}" || -z "${DISTRO}" ]]; then
+		_e_warn "No se ha especificado gestor de paquetes y/o distro, por lo \
 que este script no puede determinar fehacientemente cual es su lista de \
 paquetes. Debera realizar los cambios manualmente como considere mas apropiado"
 		press_any_key
@@ -911,6 +898,8 @@ paquetes. Debera realizar los cambios manualmente como considere mas apropiado"
 # Opens eventoL or displays url if fails, plus instructions
 function task_open_eventol() {
 	local url="${EVENTOL_URL_BASE}/event/${EVENTOL_URL_EVENT}"
+
+	_e_title "Registrando instalacion..."
 
 	cat <<EOF
 Vamos a registrar la instalacion en eventoL, que es nuestro sistema libre para administracion de eventos (disponible en https://github.com/GNUtn/eventoL). A continuacion se abrira el navegador con la pagina del evento.
@@ -927,11 +916,11 @@ EOF
 
 	open_webbrowser "$url"
 	if [ $? -ne 0 ]; then
-		hc_e_err "No se ha podido abrir un navegador, por favor dirijase a esta \
+		_e_err "No se ha podido abrir un navegador, por favor dirijase a esta \
 URL:\n\t${url}"
 	fi
 
-	hc_e_msg "Registre la instalacion, lo espero..."
+	_e_msg "Registre la instalacion, lo espero..."
 	press_any_key
 
 	return 0
@@ -942,22 +931,24 @@ function task_select_package_manager() {
 	local answer=""
 
 	PACKAGE_MANAGER_BIN="$(get_package_manager)"
-	PACKAGE_MANAGER_INSTALL_PARAMS="$(get_package_manager_install_params ${PACKAGE_MANAGER_BIN})"
-	PACKAGE_MANAGER_UPDATE_PARAMS="$(get_package_manager_update_params ${PACKAGE_MANAGER_BIN})"
-	PACKAGE_MANAGER_UPGRADE_PARAMS="$(get_package_manager_upgrade_params ${PACKAGE_MANAGER_BIN})"
+	PACKAGE_MANAGER_INSTALL_PARAMS="$(get_package_manager_install_params "${PACKAGE_MANAGER_BIN}")"
+	PACKAGE_MANAGER_UPDATE_PARAMS="$(get_package_manager_update_params "${PACKAGE_MANAGER_BIN}")"
+	PACKAGE_MANAGER_UPGRADE_PARAMS="$(get_package_manager_upgrade_params "${PACKAGE_MANAGER_BIN}")"
 
-	hc_e_msg "Se ha detectado el siguiente gestor de paquetes: ${PACKAGE_MANAGER_BIN}"
-	hc_e_msg "Cuyos parametros son: "
-	hc_e_msg " - Para instalar:              \t${PACKAGE_MANAGER_INSTALL_PARAMS}"
-	hc_e_msg " - Para actualizar repositorio:\t${PACKAGE_MANAGER_UPDATE_PARAMS}"
-	hc_e_msg " - Para actualizar sistema:    \t${PACKAGE_MANAGER_UPGRADE_PARAMS}"
+	_e_title "Detectando gestor de paquetes..."
+
+	_e_msg "Se ha detectado el siguiente gestor de paquetes: ${PACKAGE_MANAGER_BIN}"
+	_e_msg "Cuyos parametros son: "
+	_e_msg " - Para instalar:              \t${PACKAGE_MANAGER_INSTALL_PARAMS}"
+	_e_msg " - Para actualizar repositorio:\t${PACKAGE_MANAGER_UPDATE_PARAMS}"
+	_e_msg " - Para actualizar sistema:    \t${PACKAGE_MANAGER_UPGRADE_PARAMS}"
 
 	if [ -z "${PACKAGE_MANAGER_BIN}" ]; then
-		hc_e_warn "El gestor es desconocido, debera indicar un gestor de paquetes\nDe no hacerlo, el script le solicitara que instale los paquetes necesarios manualmente"
+		_e_warn "El gestor es desconocido, debera indicar un gestor de paquetes\nDe no hacerlo, el script le solicitara que instale los paquetes necesarios manualmente"
 		answer="s"
 	else
-		read -n 1 -p 'Desea utilizar otro gestor de paquetes o especificar otro/s parametro/s? [s/N]: ' answer
-		hc_e_newline
+		read -r -n 1 -p 'Desea utilizar otro gestor de paquetes o especificar otro/s parametro/s? [s/N]: ' answer
+		_e_newline
 	fi
 
 	if [ "x${answer,,}" == "xs" ]; then
@@ -967,9 +958,9 @@ function task_select_package_manager() {
 		PACKAGE_MANAGER_UPGRADE_PARAMS="$(cin 'Escriba los parametros que debe pasarsele al gestor para actualizar todos los paquetes: ')"
 	fi
 
-	if [[ -z "${PACKAGE_MANAGER_BIN}" || ! -x "$(which ${PACKAGE_MANAGER_BIN})" ]]; then
-		hc_e_err "No se tiene acceso o no se encuentra el gestor de paquetes"
-		hc_e_warn "El script le solicitara que instale los paquetes necesarios manualmente"
+	if [[ -z "${PACKAGE_MANAGER_BIN}" || ! -x "$(which "${PACKAGE_MANAGER_BIN}")" ]]; then
+		_e_err "No se tiene acceso o no se encuentra el gestor de paquetes"
+		_e_warn "El script le solicitara que instale los paquetes necesarios manualmente"
 
 		PACKAGE_MANAGER_BIN=""
 
@@ -985,9 +976,11 @@ function task_select_package_manager() {
 }
 
 function task_system_update() {
-	packages_update
+	_e_title "Actualizando el sistema..."
+
+    packages_update
 	if [ $? -ne 0 ]; then
-		hc_e_err "La actualizacion de lista de paquetes no termino \
+		_e_err "La actualizacion de lista de paquetes no termino \
 satisfactoriamente.\n\
 Revise el registro de ejecucion y corrija los problemas"
 		press_any_key
@@ -996,7 +989,7 @@ Revise el registro de ejecucion y corrija los problemas"
 
 	packages_upgrade
 	if [ $? -ne 0 ]; then
-		hc_e_err "La actualizacion de paquetes no termino satisfactoriamente.\n\
+		_e_err "La actualizacion de paquetes no termino satisfactoriamente.\n\
 Revise el registro de ejecucion y corrija los problemas"
 		press_any_key
 		return 1
@@ -1032,12 +1025,12 @@ for task in "${TASKS[@]}"; do
 			repeat_task=false
 		else
 			print_line
-			hc_e_err "La tarea ha finalizado con fallo. Qué desea hacer?"
-			hc_e "\t1- Repetir tarea (por defecto)\n\
+			_e_err "La tarea ha finalizado con fallo. Qué desea hacer?"
+			_e "\t1- Repetir tarea (por defecto)\n\
 \t2- Continuar sin repetir tarea\n\
 \t3- Salir del script\n"
-			read -n 1 -p "Seleccione una opcion para continuar: " answer
-			hc_e_newline
+			read -r -n 1 -p "Seleccione una opcion para continuar: " answer
+			_e_newline
 
 			case "${answer}" in
 				"2")
@@ -1051,6 +1044,7 @@ for task in "${TASKS[@]}"; do
 		fi
 	done
 done
+print_line
 
 finish
 # <>
