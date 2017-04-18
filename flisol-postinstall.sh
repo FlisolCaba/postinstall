@@ -42,7 +42,7 @@ declare -r EVENTOL_URL_EVENT='caba'
 
 declare -r VERSION_MAJOR='0'
 declare -r VERSION_MINOR='7'
-declare -r VERSION_REV='3-201704'
+declare -r VERSION_REV='4-201704'
 
 declare -r INSTALL_URL="http://install.flisolcaba.net"
 
@@ -81,6 +81,18 @@ TASKS=( \
 )
 # <>
 
+# CTRL+C trap
+function ctrl_c() {
+	_e_newline
+	_e_notice "Se ha presionado CTRL+C.  Saliendo forzadamente..."
+
+	# cleanup?
+
+	exit 130
+}
+# <>
+
+# Echoing functions
 function _e() {
 	echo -en "$@"
 }
@@ -118,9 +130,13 @@ function _e_debug() {
 		echo "DEBUG### $*"
 	fi
 }
+
+function print_line() {
+	_e "-----------------------------------------------------------------------\n"
+}
 # <>
 
-# Funciones
+# Helpers
 
 function elevate() {
 	if am_i_root; then
@@ -129,32 +145,6 @@ function elevate() {
 		sudo "$@"
 	fi
 	return $?
-}
-
-function press_any_key() {
-	read -r -s -n 1 -p '**? Presione cualquier tecla para continuar...'
-	_e_newline
-}
-
-# Read a line from the user input
-function cin() {
-	local data=""
-	read -r -e -p "${1}" data
-	printf "%s" "${data}"
-}
-
-function print_line() {
-	_e "-----------------------------------------------------------------------\n"
-}
-
-# CTRL+C trap
-function ctrl_c() {
-	_e_newline
-	_e_notice "Se ha presionado CTRL+C.  Saliendo forzadamente..."
-
-	# cleanup?
-
-	exit 130
 }
 
 # Executes a system command using the appropiate terminal, optionally elevating
@@ -180,6 +170,48 @@ function function_exists() {
 
 	return 1
 }
+
+# Determinate wheter we have elevated privs or not
+function am_i_root() {
+	[[ "$(whoami)" == "root" ]] && return 0
+
+	return 1
+}
+
+# Opens a URL in the system web browser, and returns the exit value
+function open_webbrowser() {
+	local url="$1"
+
+	xopen="$(which xdg-open || which gnome-open || which firefox || which chrome || which chromium)"
+	if [[ -x "$xopen" ]]; then
+		"$xopen" "$url" & > /dev/null 2>&1
+		return $?
+	fi
+
+	return 1
+}
+
+# Exits with error, showing a message
+function bail_out() {
+	_e_notice "$@"
+	exit 1
+}
+
+function press_any_key() {
+	read -r -s -n 1 -p '**? Presione cualquier tecla para continuar...'
+	_e_newline
+}
+
+# Read a line from the user input
+function cin() {
+	local data=""
+	read -r -e -p "${1}" data
+	printf "%s" "${data}"
+}
+
+# <>
+
+# Tasks functions
 
 # ToDo
 # List every network interface, returning an array like ( "eth0" "eth1" "..." )
@@ -644,26 +676,6 @@ EOF" 1
 	return 1
 }
 
-# Opens a URL in the system web browser, and returns the exit value
-function open_webbrowser() {
-	local url="$1"
-
-	xopen="$(which xdg-open || which gnome-open || which firefox || which chrome || which chromium)"
-	if [[ -x "$xopen" ]]; then
-		"$xopen" "$url" & > /dev/null 2>&1
-		return $?
-	fi
-
-	return 1
-}
-
-# Sets global to determinate wheter we have elevated privs or not
-function am_i_root() {
-	[[ "$(whoami)" == "root" ]] && return 0
-
-	return 1
-}
-
 # Checks prerequisites for the script
 function prereq() {
 	am_i_root \
@@ -680,12 +692,6 @@ Instale 'sudo' o ejecute este script como root"
 
 		rm "${SCRIPT_SIGNATURE_FILE}" > /dev/null 2>&1
 	fi
-}
-
-# Exits with error, showing a message
-function bail_out() {
-	_e_notice "$@"
-	exit 1
 }
 
 # Writes a file to prove that the script has finished successfully
