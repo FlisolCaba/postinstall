@@ -36,21 +36,20 @@ declare -r FLISOL_EVENT='CABA'
 declare -r FLISOL_YEAR="$(date +'%Y')"
 declare -r FLISOL_EDITION="$(( $(date +'%y') - 4 ))"
 
+declare -r EVENTOL_URL_BASE='https://eventol.flisol.org.ar'
 declare -r EVENTOL_URL_EVENT='caba'
 
 declare -r VERSION_MAJOR='0'
-declare -r VERSION_MINOR='6'
-declare -r VERSION_REV='16rev-2016'
+declare -r VERSION_MINOR='7'
+declare -r VERSION_REV='1-201704'
 
-declare -r POSTINSTALL_URL="http://postinstall.flisolcaba.net"
-declare -r PREINSTALL_URL="http://preinstall.flisolcaba.net"
+declare -r POSTINSTALL_URL="http://install.flisolcaba.net/postinstall"
+declare -r PREINSTALL_URL="http://install.flisolcaba.net/preinstall"
 # <>
 
 # Config interna
 # NO MODIFICAR a menos que sepa lo que hace
 declare -r VERSION="${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_REV}"
-
-declare -r EVENTOL_URL_BASE='https://flisol.usla.org.ar'
 
 declare -r SCRIPT_SIGNATURE_FILE="${HOME}/.flisol${EVENTOL_URL_EVENT}${FLISOL_YEAR}"
 
@@ -140,22 +139,13 @@ function hc_e_debug() {
 }
 # <>
 
-# include hc_boolean
-# https://git.linuxnoblog.net/hackan/funciones-bash/commit/feeff34b3c563fed3fca2d558fdf69dbc70ebf10
-# Declaracion de variables booleanas
-declare -r hc_true=1
-declare -r HC_TRUE=1
-declare -r hc_false=
-declare -r HC_FALSE=
-# <>
-
 # Funciones
 
-function elevate(){
-	if [ ${IM_ROOT} ]; then
+function elevate() {
+	if am_i_root; then
 		$@
 	else
-		sudo $@
+		sudo "$@"
 	fi
 	return $?
 }
@@ -198,7 +188,7 @@ function system() {
 	local params='-c'
 
 	# execute
-	$([ -n "$2" ] && printf "%s" "elevate") "$terminal" "$params" "'${1}'"
+	$([ -n "$2" ] && printf "%s" "elevate") "$terminal" "$params" "${1}"
 }
 
 # Returns 0 if the given function exists, 1 otherwise
@@ -217,26 +207,14 @@ function list_interfaces() {
 }
 # <>
 
-# Return the OS type as:
-# 'linux'
-# 'bsd'
-# 'osx'
-# 'solaris'
-# ''
+# Try to get info about the OS, method 1
 function os_type_m1() {
 	# http://stackoverflow.com/questions/394230/detect-the-os-from-a-bash-script
 
 	printf "%s" "${OSTYPE}"
 }
 
-# Return the OS type as:
-# 'linux'
-# 'bsd'
-# 'osx'
-# 'solaris'
-# 'windows'
-# 'aix'
-# ''
+# Try to get info about the OS, method 2
 function os_type_m2() {
 	# http://stackoverflow.com/questions/394230/detect-the-os-from-a-bash-script
 
@@ -351,7 +329,7 @@ function get_distro() {
 	printf "%s" "${name}"
 }
 
-# Return the package manager binary as:
+# Return the package manager binary name as:
 # 'apt'
 # 'apt-get'
 # 'pacman'
@@ -379,12 +357,12 @@ function get_package_manager_install_params() {
 
 	case "${pm}" in
 		'apt-get')	params="install";;
-		'pacman')		params="-S";;
-		'emerge')		params="-s";;
-		'zypper')		params="in";;
-		'apt')			params="install";;
-		'yum')			params="install";;
-		*)					params="";;
+		'pacman')	params="-S";;
+		'emerge')	params="-s";;
+		'zypper')	params="in";;
+		'apt')		params="install";;
+		'yum')		params="install";;
+		*)			params="";;
 	esac
 
 	printf "%s" "${params}"
@@ -422,13 +400,13 @@ function get_package_manager_upgrade_params() {
 	local params=""
 
 	case "${pm}" in
-		'apt-get')	params="upgrade";;
-		'zypper')		params="update";;
-		'emerge')		params="--sync";;
-		'pacman')		params="-Su";;
-		'apt')			params="upgrade";;
-		'yum')			params="upgrade";;
-		*)					params=""
+		'apt-get')		params="upgrade";;
+		'zypper')			params="update";;
+		'emerge')			params="--sync";;
+		'pacman')			params="-Su";;
+				'apt')		params="upgrade";;
+				'yum')		params="upgrade";;
+		*)						params=""
 	esac
 
 	printf "%s" "${params}"
@@ -446,8 +424,7 @@ function packages_install() {
 		hc_e_notice "${PACKAGE_MANAGER_BIN} ${PACKAGE_MANAGER_INSTALL_PARAMS} ${packages[*]}"
 		elevate $PACKAGE_MANAGER_BIN $PACKAGE_MANAGER_INSTALL_PARAMS ${packages[*]}
 		if [ $? -ne 0 ]; then
-			hc_e_err "La instalacion no termino satisfactoriamente.\n\
-								Revise el registro de ejecucion y corrija los problemas"
+			hc_e_err "La instalacion no termino satisfactoriamente.\nRevise el registro de ejecucion y corrija los problemas"
 			hc_e_notice "Presione CTRL+C para salir"
 			press_any_key
 		fi
@@ -547,14 +524,14 @@ function get_sources_ubuntu_apt-get() {
 function get_sources_ubuntu_apt() {
 	SOURCES_CONTENTS=( \
 "###### Ubuntu Main Repos
-deb http://ar.archive.ubuntu.com/ubuntu/ xenial main restricted universe multiverse
-#deb-src http://ar.archive.ubuntu.com/ubuntu/ xenial main restricted universe multiverse
+deb http://ar.archive.ubuntu.com/ubuntu/ yakkety main restricted universe multiverse
+#deb-src http://ar.archive.ubuntu.com/ubuntu/ yakkety main restricted universe multiverse
 
 ###### Ubuntu Update Repos
-deb http://ar.archive.ubuntu.com/ubuntu/ xenial-security main restricted universe multiverse
-deb http://ar.archive.ubuntu.com/ubuntu/ xenial-updates main restricted universe multiverse
-#deb-src http://ar.archive.ubuntu.com/ubuntu/ xenial-security main restricted universe multiverse
-#deb-src http://ar.archive.ubuntu.com/ubuntu/ xenial-updates main restricted universe multiverse
+deb http://ar.archive.ubuntu.com/ubuntu/ yakkety-security main restricted universe multiverse
+deb http://ar.archive.ubuntu.com/ubuntu/ yakkety-updates main restricted universe multiverse
+#deb-src http://ar.archive.ubuntu.com/ubuntu/ yakkety-security main restricted universe multiverse
+#deb-src http://ar.archive.ubuntu.com/ubuntu/ yakkety-updates main restricted universe multiverse
 " \
 	)
 }
@@ -586,7 +563,7 @@ function get_sources_filepath_apt_huayra() {
 
 # Replace the sources file for the given distro
 # 1: distro
-# 2: packet manager
+# 2: package manager
 function replace_sources() {
 	local distro="${1}"
 	local pm="${2}"
@@ -645,11 +622,14 @@ Coordinador de Instaladores"
 			if [ "x${answer,,}" == "xs" ]; then
 				elevate mv "${sources_filepath}" "${sources_filepath}.bak"
 				# ToDo: use system()
-				printf "%s" "${sources_cont}" | elevate tee "${sources_filepath}" > /dev/null 2>&1
+				#printf "%s" "${sources_cont}" | elevate tee "${sources_filepath}" > /dev/null 2>&1
+				system "cat > ${sources_filepath} <<EOF
+${sources_cont}
+EOF" 1
 				if [ $? -eq 0 ]; then
 					hc_e_msg "Lista reemplazada"
 				else
-					hc_e_err "Ocurrio algun error al tratar de reemplazar la lista"
+					hc_e_err "Ocurrio un error al tratar de reemplazar la lista"
 					return 1
 				fi
 			fi
@@ -666,22 +646,24 @@ function open_webbrowser() {
 	local url="$1"
 
 	xopen="$(which xdg-open || which gnome-open || which firefox || which chrome || which chromium)"
-	[[ -x "$xopen" ]] && "$xopen" "$url"& > /dev/null 2>&1 && return $?
+	if [[ -x "$xopen" ]]; then
+		"$xopen" "$url" & > /dev/null 2>&1
+		return $?
+	fi
 
 	return 1
 }
 
 # Sets global to determinate wheter we have elevated privs or not
 function am_i_root() {
-	if [ "$(whoami)" == "root" ]; then
-		IM_ROOT=$hc_true
-	fi
+	[[ "$(whoami)" == "root" ]] && return 0
+
+	return 1
 }
 
 # Checks prerequisites for the script
 function prereq() {
-	am_i_root
-	[ ! ${IM_ROOT} ] \
+	am_i_root \
 		&& [ ! -x "$(which sudo)" ] \
 		&& bail_out "No se puede elevar privilegios!\n\
 Instale 'sudo' o ejecute este script como root"
@@ -882,15 +864,13 @@ function task_fix_interfaces() {
 	elevate mv /etc/network/interfaces /etc/network/interfaces.bak
 	# I prefer not to use tee, I don't know if it's everywhere
 	# Otherwise, this line could be:
-	# echo -e "auto lo\niface lo inet loopback\n" | elevate tee /etc/network/interfaces
-	# NOT WORKING! COULDN'T FIND OUT WHY
-	#system 'echo -e "auto lo\niface lo inet loopback\n" > /etc/network/interfaces' 1
-	echo -e "auto lo\niface lo inet loopback\n" | elevate tee /etc/network/interfaces > /dev/null 2>&1
+	# echo -e "auto lo\niface lo inet loopback\n" | elevate tee /etc/network/interfaces > /dev/null 2>&1
+	system 'echo -e "source /etc/network/interfaces.d/*\n\nauto lo\niface lo inet loopback" > /etc/network/interfaces' 1
 
 	if [ $? -eq 0 ]; then
 		hc_e_msg "Listo"
 	else
-		hc_e_err "Ocurrio algun error al tratar de escribir el archivo"
+		hc_e_err "Ocurrio un error al tratar de escribir el archivo"
 		return 1
 	fi
 
@@ -926,7 +906,7 @@ paquetes. Debera realizar los cambios manualmente como considere mas apropiado"
 
 	replace_sources "${DISTRO}" "${PACKAGE_MANAGER_BIN}"
 	return $?
-	}
+}
 
 # Opens eventoL or displays url if fails, plus instructions
 function task_open_eventol() {
@@ -935,15 +915,13 @@ function task_open_eventol() {
 	cat <<EOF
 Vamos a registrar la instalacion en eventoL, que es nuestro sistema libre para administracion de eventos (disponible en https://github.com/GNUtn/eventoL). A continuacion se abrira el navegador con la pagina del evento.
 Para registrar la instalacion, siga estos pasos:
- 1- Pidale al instalador que inicie sesion con su usuario
- 2- Registre la instalacion en Colaboradores > Cargar una instalacion
- 3- Complete los campos indicados
- 4- Recuerdele al instalador que aplica para el desafio:
-    http://wiki.cafelug.org.ar/index.php/Flisol/2016/Instaladores/Instalaciones
+ 1- Pidale al instalador que inicie sesion con su usuario.
+ 2- Registre la instalacion en Colaboradores > Cargar una instalacion.
+ 3- Complete los campos indicados.
 
-Si no se encuentra registrado, debe crear una cuenta en la seccion Iniciar sesion y luego en Registrarme
+Si no se encuentra registrado, debe crear una cuenta en la seccion Iniciar sesion y luego en Registrarme.
 
-Al terminar, podra continuar la ejecucion de este script
+Al terminar, podra continuar la ejecucion de este script.
 
 EOF
 
@@ -975,9 +953,7 @@ function task_select_package_manager() {
 	hc_e_msg " - Para actualizar sistema:    \t${PACKAGE_MANAGER_UPGRADE_PARAMS}"
 
 	if [ -z "${PACKAGE_MANAGER_BIN}" ]; then
-		hc_e_warn "El gestor es desconocido, debera indicar un gestor de \
-paquetes\nDe no hacerlo, el script le solicitara que instale los paquetes \
-necesarios manualmente"
+		hc_e_warn "El gestor es desconocido, debera indicar un gestor de paquetes\nDe no hacerlo, el script le solicitara que instale los paquetes necesarios manualmente"
 		answer="s"
 	else
 		read -n 1 -p 'Desea utilizar otro gestor de paquetes o especificar otro/s parametro/s? [s/N]: ' answer
@@ -991,10 +967,9 @@ necesarios manualmente"
 		PACKAGE_MANAGER_UPGRADE_PARAMS="$(cin 'Escriba los parametros que debe pasarsele al gestor para actualizar todos los paquetes: ')"
 	fi
 
-	if [ -z "${PACKAGE_MANAGER_BIN}" ] || [ ! -x "$(which ${PACKAGE_MANAGER_BIN})" ]; then
+	if [[ -z "${PACKAGE_MANAGER_BIN}" || ! -x "$(which ${PACKAGE_MANAGER_BIN})" ]]; then
 		hc_e_err "No se tiene acceso o no se encuentra el gestor de paquetes"
-		hc_e_warn "El script le solicitara que instale los paquetes necesarios \
-manualmente"
+		hc_e_warn "El script le solicitara que instale los paquetes necesarios manualmente"
 
 		PACKAGE_MANAGER_BIN=""
 
@@ -1045,20 +1020,17 @@ PACKAGE_MANAGER_UPDATE_PARAMS=""
 PACKAGE_MANAGER_UPGRADE_PARAMS=""
 DISTRO=""
 
-IM_ROOT=$hc_false
-
 SOURCES_FILEPATHS=( )
 SOURCES_CONTENTS=( )
 # <>
 
-repeat_main_loop=$hc_true
-for t in ${TASKS[@]}; do
-	while [ $repeat_main_loop ]; do
-		repeat_main_loop=$hc_false
-
+for task in "${TASKS[@]}"; do
+	repeat_task=true
+	while $repeat_task; do
 		print_line
-		$t
-		if [ $? -ne 0 ]; then
+		if $task; then
+			repeat_task=false
+		else
 			print_line
 			hc_e_err "La tarea ha finalizado con fallo. Qué desea hacer?"
 			hc_e "\t1- Repetir tarea (por defecto)\n\
@@ -1069,20 +1041,15 @@ for t in ${TASKS[@]}; do
 
 			case "${answer}" in
 				"2")
-					repeat_main_loop=$hc_false
+					repeat_task=false
 					;;
 
 				"3")
 					bail_out "Saliendo con error..."
 					;;
-
-				*)
-					repeat_main_loop=$hc_true
-					;;
 			esac
 		fi
 	done
-	repeat_main_loop=$hc_true
 done
 
 finish
