@@ -527,14 +527,14 @@ function get_sources_ubuntu_apt-get() {
 function get_sources_ubuntu_apt() {
 	SOURCES_CONTENTS=( \
 "###### Ubuntu Main Repos
-deb http://ar.archive.ubuntu.com/ubuntu/ yakkety main restricted universe multiverse
-#deb-src http://ar.archive.ubuntu.com/ubuntu/ yakkety main restricted universe multiverse
+deb http://ar.archive.ubuntu.com/ubuntu/ xenial main restricted universe multiverse
+deb-src http://ar.archive.ubuntu.com/ubuntu/ xenial main restricted universe multiverse
 
 ###### Ubuntu Update Repos
-deb http://ar.archive.ubuntu.com/ubuntu/ yakkety-security main restricted universe multiverse
-deb http://ar.archive.ubuntu.com/ubuntu/ yakkety-updates main restricted universe multiverse
-#deb-src http://ar.archive.ubuntu.com/ubuntu/ yakkety-security main restricted universe multiverse
-#deb-src http://ar.archive.ubuntu.com/ubuntu/ yakkety-updates main restricted universe multiverse
+deb http://ar.archive.ubuntu.com/ubuntu/ xenial-security main restricted universe multiverse
+deb http://ar.archive.ubuntu.com/ubuntu/ xenial-updates main restricted universe multiverse
+deb-src http://ar.archive.ubuntu.com/ubuntu/ xenial-security main restricted universe multiverse
+deb-src http://ar.archive.ubuntu.com/ubuntu/ xenial-updates main restricted universe multiverse
 " \
 	)
 }
