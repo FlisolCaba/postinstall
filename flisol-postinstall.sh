@@ -184,7 +184,7 @@ function open_webbrowser() {
 
 	xopen="$(which xdg-open || which gnome-open || which firefox || which chrome || which chromium)"
 	if [[ -x "$xopen" ]]; then
-		"$xopen" "$url" & > /dev/null 2>&1
+        $("$xopen" "$url" > /dev/null 2>&1) &
 		return $?
 	fi
 
