@@ -1024,7 +1024,7 @@ function task_create_shortcuts() {
 	Name=CaFeLUG
 	Descripcion="Grupo de usuarios de GNU/Linux en Capital Federal"
 	Exec=xdg-open "https://cafelug.org.ar"
-	Icon=/home/pedro/.cafelug.png
+	Icon=/home/$USER/.cafelug.png
 	" > $(xdg-user-dir DESKTOP)/cafelug.desktop
 	cp cafelug-twitter.png ~/.cafelug-twitter.png
 	echo "
@@ -1032,7 +1032,7 @@ function task_create_shortcuts() {
 	Name=Twitter @CaFeLUG
 	Descripcion="CaFeLUG en Twitter"
 	Exec=xdg-open "https://twitter.com/CaFeLUG_Oficial"
-	Icon=/home/pedro/.cafelug-twitter.png
+	Icon=/home/$USER/.cafelug-twitter.png
 	" > $(xdg-user-dir DESKTOP)/cafelug-twitter.desktop
 }
 
