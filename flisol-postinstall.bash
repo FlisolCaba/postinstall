@@ -78,6 +78,7 @@ TASKS=( \
 	"task_system_update" \
 	"task_open_eventol" \
 	"task_change_wallpaper" \
+	"task_create_shortcuts" \
 )
 # <>
 
@@ -1015,6 +1016,26 @@ Revise el registro de ejecucion y corrija los problemas"
 
 	return 0
 }
+
+function task_create_shortcuts() {
+	cp cafelug.png ~/.cafelug.png
+	echo "
+	[Desktop Entry]
+	Name=CaFeLUG
+	Comment="Grupo de usuarios de GNU/Linux en Capital Federal"
+	Exec=xdg-open "https://cafelug.org.ar"
+	Icon=$HOME/.cafelug.png
+	" > $(xdg-user-dir DESKTOP)/cafelug.desktop
+	cp cafelug-twitter.png ~/.cafelug-twitter.png
+	echo "
+	[Desktop Entry]
+	Name=Twitter @CaFeLUG
+	Comment="CaFeLUG en Twitter"
+	Exec=xdg-open "https://twitter.com/CaFeLUG_Oficial"
+	Icon=$HOME/.cafelug-twitter.png
+	" > $(xdg-user-dir DESKTOP)/cafelug-twitter.desktop
+}
+
 # <>
 
 # main()
